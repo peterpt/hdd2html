@@ -32,7 +32,7 @@ Note : Do not delete any file inside its working directory .
 hdd2html -c
 
 # Instalation video
--will be next
+https://youtu.be/Jw8OXHp-Mog
 
 
 
