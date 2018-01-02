@@ -1,6 +1,10 @@
 # hdd2html
 A tool for cloud administrators
 
+# Screenshot
+Screenshot from configured webpage in server
+<img src="https://s14.postimg.org/uhz4wk7cx/hdd2html.png" width="50%"></img>
+
 # How it works
 I did this script because i was in need for it to use in my server .
 hdd2html creates an webpage in user desired location and retrieve all data from pre-configured hard drives to that
@@ -16,16 +20,19 @@ I did it , so i dont need to remote shell my cloud server to monitor the HDD spa
 This way i can access this webpage remotely on my webserver http://myserver.com/somedir/space.html .
 
 # How to install
-- git clone https://github.com/peterpt/hdd2html/hdd2html.git
-- cd hdd2html && hdd2html
+- git clone https://github.com/peterpt/hdd2html.git
+- cd hdd2html && ./hdd2html
 
 after executing , it will be installed on /usr/local/sbin folder , and will create its work directory on :
 - /usr/local/share/hdd2html
 
 Note : Do not delete any file inside its working directory .
 
-#To configure
+# To configure
 hdd2html -c
+
+# Instalation video
+-will be next
 
 
 
