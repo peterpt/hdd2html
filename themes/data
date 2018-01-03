@@ -1,0 +1,15 @@
+<hr>
+<p class="style2">HDD Brand : var1</p>
+<p class="style2">HDD  Device : var2</p>
+<p class="style2">Mounted In : var3</p>
+<p class="style2">Hard Disk Size : var4</p>
+<p class="style2">Occupied Space Gb : var5</p>
+<p class="style2">Free Space Left : var6</p>
+<div class="container">
+  <h2>varname</h2>
+  <div class="progress">
+    <div class="progress-bar" role="progressbar" aria-valuenow="var7" aria-valuemin="0" aria-valuemax="100" style="width: var8">
+      var9    </div>
+  </div>
+ </div> 
+ </p>

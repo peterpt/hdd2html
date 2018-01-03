@@ -16,11 +16,11 @@ I did it , so i dont need to remote shell my cloud server to monitor the HDD spa
 This way i can access this webpage remotely on my webserver http://myserver.com/somedir/space.html .
 
 # How to install
-git clone https://github.com/peterpt/hdd2html/hdd2html.git
-cd hdd2html && hdd2html
+- git clone https://github.com/peterpt/hdd2html/hdd2html.git
+- cd hdd2html && hdd2html
 
 after executing , it will be installed on /usr/local/sbin folder , and will create its work directory on :
-/usr/local/share/hdd2html
+- /usr/local/share/hdd2html
 
 Note : Do not delete any file inside its working directory .
 

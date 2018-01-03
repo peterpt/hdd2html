@@ -1,0 +1,390 @@
+#!/bin/bash
+path=$(pwd)
+instdir="/usr/local/share/hdd2html"
+rc="/etc/rc.local"
+hddcfg="$instdir/hddconfig"
+cfg="$instdir/config"
+
+cfghtml() {
+htmln=$(sed -n 2p < $cfg | awk '{print$2}')
+htmld=$(sed -n 3p < $cfg | awk '{print$2}')
+if [ -z "$htmln" ]
+then
+echo "There is an error in your config file"
+echo "Configure again using (hdd2html -c)"
+exit 1
+elif [ -z "$htmld" ] 
+then
+echo "There is an error in your config file"
+echo "Configure again using (hdd2html -c)"
+exit 1
+fi
+hddvs=$(wc -l < $hddcfg)
+if [ $hddvs == "0" ]
+then
+echo "There is an error in your config file"
+echo "Configure again using (hdd2html -c)"
+exit 1
+fi
+rm -f "$instdir/$htmln" >/dev/null 2>&1
+cp "$instdir/themes/1" "$instdir/$htmln" >/dev/null 2>&1
+for i in $(seq "$hddvs" ); do
+
+# Read hdd device
+hddnmb=$(sed -n "${i}p" < $hddcfg)
+
+#Get model
+a1=$(df $hddnmb | awk '{print$1}' | sed -n 2p)
+hddmod=$(hdparm -I $a1 > $instdir/model 2>&1 )
+hddmod1=$(grep "Model" < $instdir/model)
+if [[ -z $hddmod1 ]]
+then
+hddmodel="Unable to get Data"
+else
+hddmodel=$(grep "Model" < $instdir/model | awk '{$1=$2=""; print $0}')
+fi
+# Get Used space in percentage
+hddusedp=$(df -h $hddnmb | awk '{print$5}' | sed -n 2p)
+hddused=$(df -h $hddnmb | awk '{print$5}' | sed -n 2p | sed 's#%##g')
+# Get total hdd space
+hddtot=$(df -h $hddnmb | awk '{print$2}' | sed -n 2p)
+#get used space
+hddusgb=$(df -h $hddnmb | awk '{print$3}' | sed -n 2p)
+#get free space
+hddfsgb=$(df -h $hddnmb | awk '{print$4}' | sed -n 2p)
+#Get mounted point
+hddmpnt=$(df -h $hddnmb | awk '{print$6}' | sed -n 2p)
+cp $instdir/themes/data $instdir/data
+sed "s|var1|$hddmodel|g" $instdir/data > $instdir/temp
+sed "s|var2|$a1|g" $instdir/temp > $instdir/temp1
+rm -f $instdir/temp
+sed "s|var3|$hddmpnt|g" $instdir/temp1 > $instdir/temp 
+rm -f $instdir/temp1
+sed "s|var4|$hddtot|g" $instdir/temp > $instdir/temp1
+rm -f $instdir/temp
+sed "s|var5|$hddusgb|g" $instdir/temp1 > $instdir/temp 
+rm -f $instdir/temp1
+sed "s|var6|$hddfsgb|g" $instdir/temp > $instdir/temp1
+rm -f $instdir/temp
+sed "s|var7|$hddused|g" $instdir/temp1 > $instdir/temp
+rm -f $instdir/temp1
+sed "s|var8|$hddusedp|g" $instdir/temp > $instdir/temp1 
+rm -f $instdir/temp
+sed "s|var9|$hddusedp|g" $instdir/temp1 > $instdir/temp
+rm -f $instdir/temp1
+sed "s|varname|$hddmpnt|g" $instdir/temp > $instdir/temp1
+rm -f $instdir/data
+cat $instdir/temp1 >> $instdir/$htmln
+rm -f $instdir/temp1
+rm -f $instdir/model
+done
+cat $instdir/themes/end >> $instdir/$htmln
+mv $instdir/$htmln $htmld/$htmln
+echo "hdd2html" >> $instdir/new
+echo "exit 0" >> $instdir/new
+rm -f $instdir/temp >/dev/null 2>&1
+echo -n "Do you want to set hdd2html on your linux startup ? (y/n)"
+read -r sttup
+case $sttup in
+y|Y|Yes|YES)
+rm -f $rc >/dev/null 2>&1
+mv $instdir/new /etc/rc.local >/dev/null 2>&1
+echo ""
+echo "hdd2html installed sucefully"
+echo "Press [ENTER] key to finish"
+read -r ent
+echo "You should restart your server to apply the changes"
+echo "A backup of your original rc.local file was stored in "
+echo "$instdir/rclocal.bak"
+exit 1
+;;
+n|No|no|NO)
+echo "Configuration is done."
+echo "To configure o your webserver startup run (hdd2html -c)"
+exit 1
+;;
+*)
+echo "Invalid option"
+exit 1
+;;
+esac
+
+}
+
+
+cfghdd() {
+mntp=$(grep "/" < /etc/fstab | awk '{print$2}' | sed 's#for##g' | tr " " "\n" | sed '/^$/d' | sed '/^#/ d')
+devhd=$(grep "/dev" < /etc/fstab | awk '{print$1}' | tr " " "\n" | sed '/^$/d' | sed '/^#/ d')
+clear
+echo "Displaying current configured devices by UUID :"
+echo "-----------------------------------------------"
+echo "$mntp"
+echo "-----------------------------------------------"
+echo "Displaying current configred devices by /dev :"
+echo "$devhd"
+echo "-----------------------------------------------"
+echo ""
+echo "Add an HDD Partition to list :"
+echo "Example 1 : /dev/sda1"
+echo "Example 2 : /media/disk1"
+echo ""
+echo -n "ADD PARTITION : "
+read parti
+if [ -f $hddcfg ]
+then
+echo $parti >> $hddcfg
+echo "Partition : $parti added to config file"
+else
+echo $parti > $hddcfg
+echo "Partition : $parti added to config file"
+fi
+echo ""
+echo "Press [ENTER] key to continue"
+read cont
+echo ""
+echo -n "Do You want to add a new partition to the list ? (y/n) : "
+read sel
+case $sel in
+y|Yes|yes|YES)
+cfghdd
+;;
+n|NO|No|no)
+cfghtml
+;;
+*) 
+echo "Invalid option , configuration removed"
+rm -f $instdir/config >/dev/null 2>&1
+rm -f $instdir/hddconfig >/dev/null 2>&1
+exit 1
+;;
+esac
+}
+
+config () {
+if [ -f $instdir/config ]
+then
+echo "A configuration file already exists with these details : "
+outn=$(sed -n 2p < $instdir/config | awk '{print$2}')
+outd=$(sed -n 3p < $instdir/config | awk '{print$2}')
+echo ""
+echo "Output html : $outn"
+echo "Output directory :$outd"
+if [ -f $instdir/hddconfig ]
+then
+echo ""
+echo "Hard Disks configured :"
+hdd=$(cat $instdir/hddconfig)
+echo "$hdd"
+fi
+fi
+echo ""
+echo "Do You want to create a new configuration file ? (y/n) : "
+read sel
+case $sel in
+n|N|No|NO)
+cfghtml
+;;
+y|yes|Yes|YES)
+rm -f $instdir/hddconfig >/dev/null 2>&1
+rm -f $instdir/config >/dev/null 2>&1
+clear
+echo "Select output name for the html" 
+echo "Example: index.html"
+echo ""
+echo -n "Output Name : "
+read -r onm
+if [ -z $onm ]
+then
+rm -f $instdir/config
+exit 1
+fi
+echo "# Configuration File" > $instdir/config
+echo "outputname= $onm" >> $instdir/config
+echo ""
+echo "Select output directory :"
+echo "Example: /var/www/mysite"
+echo ""
+echo -n "Output Directory : "
+read odi
+if [ -z $odi ]
+then
+rm -f $instdir/config >/dev/null 2>&1
+exit 1
+fi
+if [ ! -d $odi ]
+then
+echo "$odi directory does not exist , exiting"
+rm -f $instdir/config >/dev/null 2>&1
+exit 1
+fi
+echo "outputdir= $odi" >> $instdir/config
+echo ""
+echo "Configuration file written with success"
+echo ""
+echo "Press [Enter] key to continue"
+read cont
+clear
+rm -f $instdir/hddconfig >/dev/null 2>&1
+cfghdd
+;;
+*)
+echo "Invalid option"
+exit 1
+;;
+esac
+}
+
+if [ ! -d $instdir ]
+then
+mkdir $instdir >/dev/null 2>&1
+mkdir $instdir/themes >/dev/null 2>&1
+cp $path/themes/1 $instdir/themes/1 >/dev/null 2>&1
+cp $path/themes/data $instdir/themes/data >/dev/null 2>&1
+cp $path/themes/end $instdir/themes/end >/dev/null 2>&1
+cp $path/hdd2html /usr/local/sbin/hdd2html >/dev/null 2>&1
+chmod +x /usr/local/sbin/hdd2html >/dev/null 2>&1
+cp $rc $instdir/rc.local.bak >/dev/null 2>&1
+sed 's/\<exit 0\>//g'<$instdir/rc.local.bak >$instdir/new
+fi
+if [ ! -f $instdir/rc.local.bak ]
+then
+cp $rc $instdir/rc.local.bak >/dev/null 2>&1
+echo "A backup of your rc.local file was stored in $instdir"
+fi
+
+start() {
+if [ ! -f $hddconfig ]
+then
+echo "You should configure first"
+echo "Write hdd2html -c"
+exit 1
+fi
+if [ ! -f $cfg ]
+then
+echo "You should configure first"
+echo "Write hdd2html -c"
+exit 1
+fi
+htmln=$(sed -n 2p < $cfg | awk '{print$2}')
+htmld=$(sed -n 3p < $cfg | awk '{print$2}')
+if [[ -z $htmln ]]
+then
+echo "There is a problem with your configuration file"
+echo "Execute (hdd2html -c)"
+exit 1
+fi
+if [[ -z $htmld ]]
+then
+echo "There is a problem with your configuration file"
+echo "Execute (hdd2html -c)"
+exit 1
+fi
+hddvs=$(wc -l < $hddcfg)
+if [ $hddvs == "0" ]
+then
+echo "There is an error in your config file"
+echo "Configure again using (hdd2html -c)"
+exit 1
+fi
+rm -f $instdir/$htmln >/dev/null 2>&1
+cp $instdir/themes/1 $instdir/$htmln >/dev/null 2>&1
+for i in $(seq "$hddvs" ); do
+
+# Read hdd device
+hddnmb=$(sed -n "${i}p" < $hddcfg)
+
+#Get model
+a1=$(df $hddnmb | awk '{print$1}' | sed -n 2p)
+hddmod=$(hdparm -I $a1 > $instdir/model 2>&1 )
+hddmod1=$(grep "Model" < $instdir/model)
+if [[ -z $hddmod1 ]]
+then
+hddmodel="Unable to get Data"
+else
+hddmodel=$(grep "Model" < $instdir/model | awk '{$1=$2=""; print $0}')
+fi
+# Get Used space in percentage
+hddusedp=$(df -h $hddnmb | awk '{print$5}' | sed -n 2p)
+hddused=$(df -h $hddnmb | awk '{print$5}' | sed -n 2p | sed 's#%##g')
+# Get total hdd space
+hddtot=$(df -h $hddnmb | awk '{print$2}' | sed -n 2p)
+#get used space
+hddusgb=$(df -h $hddnmb | awk '{print$3}' | sed -n 2p)
+#get free space
+hddfsgb=$(df -h $hddnmb | awk '{print$4}' | sed -n 2p)
+#Get mounted point
+hddmpnt=$(df -h $hddnmb | awk '{print$6}' | sed -n 2p)
+cp $instdir/themes/data $instdir/data
+sed "s|var1|$hddmodel|g" $instdir/data > $instdir/temp
+sed "s|var2|$a1|g" $instdir/temp > $instdir/temp1
+rm -f $instdir/temp
+sed "s|var3|$hddmpnt|g" $instdir/temp1 > $instdir/temp 
+rm -f $instdir/temp1
+sed "s|var4|$hddtot|g" $instdir/temp > $instdir/temp1
+rm -f $instdir/temp
+sed "s|var5|$hddusgb|g" $instdir/temp1 > $instdir/temp 
+rm -f $instdir/temp1
+sed "s|var6|$hddfsgb|g" $instdir/temp > $instdir/temp1
+rm -f $instdir/temp
+sed "s|var7|$hddused|g" $instdir/temp1 > $instdir/temp
+rm -f $instdir/temp1
+sed "s|var8|$hddusedp|g" $instdir/temp > $instdir/temp1 
+rm -f $instdir/temp
+sed "s|var9|$hddusedp|g" $instdir/temp1 > $instdir/temp
+rm -f $instdir/temp1
+sed "s|varname|$hddmpnt|g" $instdir/temp > $instdir/temp1
+rm -f $instdir/data >/dev/null 2>&1
+cat $instdir/temp1 >> $instdir/$htmln
+rm -f $instdir/temp1 >/dev/null 2>&1
+rm -f $instdir/model >/dev/null 2>&1
+done
+cat $instdir/themes/end >> $instdir/$htmln 
+rm -f $htmld/$htmln >/dev/null 2>&1
+mv $instdir/$htmln $htmld/$htmln >/dev/null 2>&1
+rm -f $instdir/temp >/dev/null 2>&1
+rm -f $instdir/temp1 >/dev/null 2>&1
+sleep 600
+start
+}
+
+if [ "$1" == "-c" ]
+then
+config
+fi
+if [ "$1" == "-h" ]
+then
+echo "hdd2hml - 1.0 | http://github.com/peterpt/hdd2html"
+echo "----------------------------------------------------------"
+echo "Switches :"
+echo "hdd2html -c (configure hdd2html)"
+echo "hdd2html -r (restore your original rc.local)"
+echo "hdd2html -h (this help)"
+exit 1
+fi
+if [ "$1" == "-r" ]
+then
+if [ ! -d $instdir ]
+then
+echo "Unable to restore because this tool is not even installed"
+exit 1
+else
+if [[ ! -f "$instdir/rc.local.bak" ]]
+then
+echo "Unable to find our backup file of your rc.local"
+echo "Did you delete it ?!!!"
+echo ""
+echo "Edit /etc/rc.local file and delete the line (hdd2html)"
+exit 1
+else
+rm -f /etc/rc.local >/dev/null 2>&1
+cp $instdir/rc.local.bak /etc/rc.local >/dev/null 2>&1
+echo "Done"
+echo ""
+echo "Reboot your Linux"
+fi
+fi
+fi
+if [ -z $1 ]
+then 
+start
+fi
