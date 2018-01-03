@@ -3,10 +3,11 @@ A tool for cloud administrators
 
 # Screenshot
 - Screenshot from configured webpage in server
-<img src="https://s14.postimg.org/uhz4wk7cx/hdd2html.png" width="50%"></img>
+
+* <img src="https://s14.postimg.org/uhz4wk7cx/hdd2html.png" width="50%"></img>
 
 - hdd2html -h switch
-<img src="https://s14.postimg.org/jxp7dqi81/hdd2html2.png" width="50%"></img>
+* <img src="https://s14.postimg.org/jxp7dqi81/hdd2html2.png" width="50%"></img>
 
 # How it works
 I did this script because i was in need for it to use in my server .
